@@ -1,3 +1,7 @@
+[![GitHub issues](https://img.shields.io/github/issues/MrHKing/mmqtt)](https://github.com/MrHKing/mmqtt/issues)
+[![Build Status](https://img.shields.io/github/license/MrHKing/mmqtt)](https://github.com/MrHKing/mmqtt/blob/main/LICENSE)
+简体中文 | [English](./README-en.md)
+
 # MMQ broker
 *MMQ broker* 是一款完全开源，高度可伸缩，高可用的分布式 MQTT 消息服务器，适用于 IoT、M2M 和移动应用程序。
 
@@ -16,7 +20,7 @@
 
 ### 安装
 
-*MMQ broker* 是跨平台的，支持 Linux、Unix、macOS 以及 Windows。这意味着 *MMQ broker* 可以部署在 x86_64 架构的服务器上。由于使用raft一致性算法，集群部署建议奇数个。
+*MMQ broker* 是跨平台的，支持 Linux、Unix、macOS 以及 Windows。这意味着 *MMQ broker* 可以部署在 x86_64 架构的服务器上。由于使用raft一致性算法，集群部署三个节点以上。
 
 #### 从 Github 上下载源码方式
 ```bash
@@ -34,7 +38,9 @@ cd mmq/bin
 ```
 
 #### Docker安装
-
+```bash
+docker run -d --name mmq -p 2883:2883 -p 1883:3883 -p 8888:8888  paperman/mmq:v1.0.8
+```
 #### Kubernetes安装
 
 # 快速入门
@@ -85,14 +91,40 @@ sh startup.sh
 sh shutdown.sh
 ```
 
-### Dashboard
-启动后访问 http://ip:8888/dashboard/monitor
+### 配置文件
+mqtt tcp端口默认：3883
+
+mqtt websocket端口：2883
+```bash
+#*************** Spring Boot Related Configurations ***************#
+### Default web context path:
+server.servlet.contextPath=/
+### Default web server port:
+server.port=8888
+
+#*************** mqtt broker Configurations ***************#
+mmq.broker.websocketPort=2883
+mmq.broker.port=3883
+mmq.broker.ssl.password=mmq
+mmq.broker.ssl.certPath=cert/mmq.pfx
+mmq.broker.ssl.port=17733
+mmq.broker.ssl.websocketPort=36633
+mmq.broker.default.user=admin
+mmq.broker.default.password=admin@mmq
+mmq.broker.default.anonymous=true
+```
+### Dashboard --单机演示
+启动后访问 http://101.43.4.211:8888/
 
 默认账户：mmq
 
 默认密码：aaaaaa
 
-## 测试及功能说明
+mqtt tcp端口默认：1883
+
+mqtt websocket端口：2883
+
+## 文档
 详细参见
 [wiki](https://github.com/MrHKing/mmq/wiki)
 
@@ -107,4 +139,4 @@ sh shutdown.sh
 Apache License 2.0, 详见 [LICENSE](./LICENSE)。
 
 ## 群号
-QQ: 1016132679
+QQ群: 1016132679

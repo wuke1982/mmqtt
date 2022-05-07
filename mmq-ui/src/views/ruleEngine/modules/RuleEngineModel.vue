@@ -8,7 +8,7 @@
           <a-form-item label="规则名称">
             <a-input
               v-decorator="['name', { rules: [{ required: true, message: '请输入规则名称' }] }]"
-              :placeholder="$t('form.basic-form.title.placeholder')"
+              placeholder="请输入规则名称"
             />
           </a-form-item>
 
@@ -18,16 +18,16 @@
               :options="options"
             ></codemirror>
           </a-form-item>
-          <a-form-item label="是否启用">
+          <!-- <a-form-item label="是否启用">
             <a-switch v-decorator="['enable', { valuePropName: 'checked' }]" />
-          </a-form-item>
+          </a-form-item> -->
           <a-form-item label="备注">
             <a-textarea
               v-decorator="[
                 'description',
                 {
-                  rules: [{ required: true, message: '请输入备注' }],
-                },
+                  rules: [{ required: true, message: '请输入备注' }]
+                }
               ]"
               :rows="4"
               placeholder="请输入备注"
@@ -96,16 +96,17 @@
               v-decorator="[
                 'type',
                 {
-                  rules: [{ required: true, message: '请选择资源类型' }],
-                },
+                  rules: [{ required: true, message: '请选择资源类型' }]
+                }
               ]"
               placeholder="请选择资源类型"
             >
               <a-select-option value="MYSQL"> Mysql </a-select-option>
               <a-select-option value="POSTGRESQL"> Postgresql </a-select-option>
+              <a-select-option value="SQLSERVER"> SqlServer </a-select-option>
               <a-select-option value="TDENGINE"> Tdengine </a-select-option>
-              <a-select-option value="INFLUXDB"> InfluxDB </a-select-option>
               <a-select-option value="KAFKA"> Kafka </a-select-option>
+              <a-select-option value="MQTT_BROKER"> MQTT Broker </a-select-option>
             </a-select>
           </a-form-item>
         </a-row>
@@ -115,8 +116,8 @@
               v-decorator="[
                 'resourceID',
                 {
-                  rules: [{ required: true, message: '请选择资源id' }],
-                },
+                  rules: [{ required: true, message: '请选择资源id' }]
+                }
               ]"
               placeholder="请选择资源id"
             >
@@ -127,12 +128,28 @@
           </a-form-item>
         </a-row>
         <a-row :gutter="16">
-          <div>
+          <div v-if="curType != 'KAFKA' && curType != 'MQTT_BROKER'">
             <a-form-item label="SQL">
               <codemirror
                 v-decorator="['resource.sql', { rules: [{ required: true, message: '请输入SQL' }] }]"
                 :options="options"
               ></codemirror>
+            </a-form-item>
+          </div>
+          <div v-if="curType === 'KAFKA'">
+            <a-form-item label="Topic">
+              <a-input
+                v-decorator="['resource.topic', { rules: [{ required: true, message: '请输入Topic' }] }]"
+                placeholder="请输入Topic"
+              />
+            </a-form-item>
+          </div>
+          <div v-if="curType === 'MQTT_BROKER'">
+            <a-form-item label="Payload">
+              <a-input
+                v-decorator="['resource.payload', { rules: [{ required: false, message: '请输入Payload' }] }]"
+                placeholder="请输入Payload"
+              />
             </a-form-item>
           </div>
         </a-row>
@@ -161,7 +178,7 @@ export default {
       default: ''
     }
   },
-  data () {
+  data() {
     return {
       visible: false,
       resourceType: '',
@@ -177,7 +194,7 @@ export default {
       ruleEngine: {
         ruleId: '',
         name: '',
-        sql: 'SELECT \n   this.payload.msg as msg \nFROM \n   "t/#" \nWHERE \n   this.payload.msg = ' + '\'hello\'',
+        sql: 'SELECT \n   this.payload.msg as msg \nFROM \n   "t/#" \nWHERE \n   this.payload.msg = ' + "'hello'",
         description: '',
         enable: true,
         resourcesMateDatas: []
@@ -205,74 +222,77 @@ export default {
       }
     }
   },
-  mounted () {
+  mounted() {
     this.form.resetFields()
     console.log(this.id)
     this.listResources()
     this.listResourcesByRuleId()
   },
   methods: {
-    listResources () {
-      getAction(this.url.listResources, {})
-        .then(res => {
-          this.curResources = []
-          this.curResources.push({})
-          res.data.forEach(resource => {
-            this.curResources.push(resource)
-          })
-          console.log(this.curResources)
+    listResources() {
+      getAction(this.url.listResources, {}).then(res => {
+        this.curResources = []
+        this.curResources.push({})
+        res.data.forEach(resource => {
+          this.curResources.push(resource)
         })
+        console.log(this.curResources)
+      })
     },
-    listResourcesByRuleId () {
-      getAction(this.url.listResourcesByRuleId, { ruleId: this.id })
-        .then(res => {
-          if (res.data) {
-            this.ruleEngine = res.data
-          }
+    listResourcesByRuleId() {
+      getAction(this.url.listResourcesByRuleId, { ruleId: this.id }).then(res => {
+        if (res.data) {
+          this.ruleEngine = res.data
+        }
 
-          console.log(this.ruleEngine)
-          this.$nextTick(() => {
-            this.ruleEngine.resourcesMateDatas.forEach(x => {
-              x.resourceIndex = this.resourceIndex
-              this.resourceIndex++
-            })
-            this.ruleEngine.resourcesMateDatas.unshift({})
-            this.form.setFieldsValue(
-              {
-                name: this.ruleEngine.name,
-                ruleId: this.ruleEngine.ruleId,
-                sql: this.ruleEngine.sql,
-                description: this.ruleEngine.description,
-                enable: true,
-                resourcesMateDatas: this.ruleEngine.resourcesMateDatas
-              })
+        console.log(this.ruleEngine)
+        this.$nextTick(() => {
+          this.ruleEngine.resourcesMateDatas.forEach(x => {
+            x.resourceIndex = this.resourceIndex
+            this.resourceIndex++
+          })
+          this.ruleEngine.resourcesMateDatas.unshift({})
+          this.form.setFieldsValue({
+            name: this.ruleEngine.name,
+            ruleId: this.ruleEngine.ruleId,
+            sql: this.ruleEngine.sql,
+            description: this.ruleEngine.description,
+            enable: true,
+            resourcesMateDatas: this.ruleEngine.resourcesMateDatas
           })
         })
+      })
     },
 
-    getDescription (item) {
-      return '资源ID:' + item.resourceID + ' 资源类型:' + item.type + this.getResourceContentByType(item.resource, item.type)
+    getDescription(item) {
+      return (
+        '资源ID:' + item.resourceID + ' 资源类型:' + item.type + this.getResourceContentByType(item.resource, item.type)
+      )
     },
-    getResourceContentByType (resource, type) {
+    getResourceContentByType(resource, type) {
       switch (type) {
         case 'MYSQL':
           return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
         case 'POSTGRESQL':
           return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
+        case 'SQLSERVER':
+          return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
+        case 'TDENGINE':
+          return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
         case 'KAFKA':
-          return ' Kafka服务:' + resource.server
+          return ' Kafka服务:' + resource.server + ' topic:' + resource.topic
         default:
           return ''
       }
     },
-    handleDelete (item) {
+    handleDelete(item) {
       const index = this.ruleEngine.resourcesMateDatas.indexOf(item)
       if (index > -1) {
         this.ruleEngine.resourcesMateDatas.splice(index, 1)
       }
       // that.ruleEngine.resources.
     },
-    handleResourceSave (record) {
+    handleResourceSave(record) {
       this.resourcesAddFlag = !record.resourceID
       console.log(this.resourcesAddFlag)
       if (!this.resourcesAddFlag) {
@@ -280,68 +300,49 @@ export default {
       }
 
       console.log(record)
-      this.curType = ''
+      this.curType = record.type
       this.visible = true
       this.resourcesform.resetFields()
       const type = record.type
       switch (type) {
         case 'MYSQL':
-          this.$nextTick(() => {
-            this.resourcesform.setFieldsValue(
-              {
-                resourceID: record.resourceID,
-                type: type,
-                description: record.description,
-                resource: {
-                  ip: record.resource.ip,
-                  port: record.resource.port,
-                  databaseName: record.resource.databaseName,
-                  password: record.resource.password,
-                  username: record.resource.username,
-                  sql: record.resource.sql
-                }
-
-              })
-          })
-          break
         case 'POSTGRESQL':
-          this.$nextTick(() => {
-            this.resourcesform.setFieldsValue(
-              {
-                resourceID: record.resourceID,
-                type: type,
-                description: record.description,
-                resource: {
-                  ip: record.resource.ip,
-                  port: record.resource.port,
-                  databaseName: record.resource.databaseName,
-                  password: record.resource.password,
-                  username: record.resource.username,
-                  sql: record.resource.sql
-                }
-              })
-          })
-          break
+        case 'SQLSERVER':
         case 'TDENGINE':
+          this.$nextTick(() => {
+            this.resourcesform.setFieldsValue({
+              resourceID: record.resourceID,
+              type: type,
+              description: record.description,
+              resource: {
+                ip: record.resource.ip,
+                port: record.resource.port,
+                databaseName: record.resource.databaseName,
+                password: record.resource.password,
+                username: record.resource.username,
+                sql: record.resource.sql
+              }
+            })
+          })
           break
         case 'KAFKA':
           this.$nextTick(() => {
-            this.resourcesform.setFieldsValue(
-              {
-                resourceID: record.resourceID,
-                type: type,
-                description: record.description,
-                resource: {
-                  server: record.resource.server,
-                  password: record.resource.password,
-                  username: record.resource.username
-                }
-              })
+            this.resourcesform.setFieldsValue({
+              resourceID: record.resourceID,
+              type: type,
+              description: record.description,
+              resource: {
+                server: record.resource.server,
+                password: record.resource.password,
+                username: record.resource.username,
+                topic: record.resource.topic
+              }
+            })
           })
           break
       }
     },
-    handleResourceOk () {
+    handleResourceOk() {
       const that = this
       this.resourcesform.validateFields((err, values) => {
         if (!err) {
@@ -354,6 +355,7 @@ export default {
             if (resources) {
               const resource = resources[0]
               resource.resource.sql = formData.resource.sql
+              resource.resource.topic = formData.resource.topic
               resource.resourceIndex = that.resourceIndex
               that.resourceIndex++
               console.log(that.resourcesAddFlag)
@@ -376,7 +378,7 @@ export default {
         }
       })
     },
-    onSave () {
+    onSave() {
       const that = this
       // 触发表单验证
       this.form.validateFields((err, values) => {
@@ -390,7 +392,7 @@ export default {
           formData.ruleId = this.id
           const obj = postAction(this.url.save, formData)
           obj
-            .then((res) => {
+            .then(res => {
               if (res.code === 200) {
                 that.$message.success(res.message)
                 that.$emit('ok')
@@ -405,19 +407,18 @@ export default {
         }
       })
     },
-    onClose () {
+    onClose() {
       this.$router.push({ name: 'ruleEngine' })
     },
-    handleResourceCancel () {
+    handleResourceCancel() {
       this.visible = false
     },
-    resourceTypeChange (value) {
+    resourceTypeChange(value) {
       this.selectResources = this.curResources.filter(x => value === x.type)
       this.curType = value
-      this.resourcesform.setFieldsValue(
-        {
-          resourceID: ''
-        })
+      this.resourcesform.setFieldsValue({
+        resourceID: ''
+      })
     }
   }
 }

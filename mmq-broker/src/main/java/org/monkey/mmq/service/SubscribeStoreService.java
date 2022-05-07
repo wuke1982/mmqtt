@@ -19,11 +19,11 @@ import cn.hutool.core.util.StrUtil;
 import org.monkey.mmq.config.Loggers;
 import org.monkey.mmq.core.cluster.ServerMemberManager;
 import org.monkey.mmq.core.exception.MmqException;
-import org.monkey.mmq.metadata.KeyBuilder;
+import org.monkey.mmq.config.KeyBuilder;
 import org.monkey.mmq.core.consistency.matedata.RecordListener;
-import org.monkey.mmq.metadata.UtilsAndCommons;
-import org.monkey.mmq.metadata.subscribe.SubscribeMateData;
-import org.monkey.mmq.metadata.system.SystemInfoMateData;
+import org.monkey.mmq.config.UtilsAndCommons;
+import org.monkey.mmq.core.actor.metadata.subscribe.SubscribeMateData;
+import org.monkey.mmq.core.actor.metadata.system.SystemInfoMateData;
 import org.monkey.mmq.core.consistency.persistent.ConsistencyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -81,7 +81,8 @@ public class SubscribeStoreService implements RecordListener<SubscribeMateData> 
 
     @Async
     public void delete(String topicFilter, String clientId) throws MmqException {
-        consistencyService.remove(UtilsAndCommons.SUBSCRIBE_STORE + topicFilter + clientId);
+        String key = UtilsAndCommons.SUBSCRIBE_STORE + topicFilter + clientId;
+        consistencyService.remove(key);
     }
 
     public List<SubscribeMateData> getSubscribes() {
@@ -158,6 +159,9 @@ public class SubscribeStoreService implements RecordListener<SubscribeMateData> 
                 }
             }
         });
+//        return subscribeStores.stream().collect(
+//                Collectors.collectingAndThen(
+//                        Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(SubscribeMateData::getClientId))), ArrayList::new));
         return subscribeStores;
     }
 

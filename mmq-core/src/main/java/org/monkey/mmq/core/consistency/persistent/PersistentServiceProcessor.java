@@ -65,7 +65,8 @@ public class PersistentServiceProcessor extends BasePersistentServiceProcessor {
     private volatile boolean hasLeader = false;
     
     public PersistentServiceProcessor(ProtocolManager protocolManager, String kvStorageBaseDir,
-                                      String raftGroup, Function<String, Class<? extends Record>> getClassOfRecordFromKey)
+                                      String raftGroup,
+                                      Function<String, Class<? extends Record>> getClassOfRecordFromKey)
             throws Exception {
         super(kvStorageBaseDir, raftGroup, getClassOfRecordFromKey);
         this.raftGroup = raftGroup;
@@ -81,7 +82,7 @@ public class PersistentServiceProcessor extends BasePersistentServiceProcessor {
                 return;
             }
             Object leader = ((ProtocolMetaData.ValueItem) o).getData();
-            hasLeader = StringUtils.isNotBlank(String.valueOf(leader));
+            hasLeader =  StringUtils.isNotEmpty((String) leader);
             Loggers.RAFT.info("Raft group {} has leader {}", raftGroup, leader);
         });
         this.protocol.addRequestProcessors(Collections.singletonList(this));

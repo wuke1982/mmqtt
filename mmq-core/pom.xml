@@ -139,6 +139,11 @@
         <!-- JRaft dependency end -->
 
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -164,11 +169,18 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-crypto</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.12</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.rocksdb</groupId>-->
+<!--            <artifactId>rocksdbjni</artifactId>-->
+<!--        </dependency>-->
     </dependencies>
 
 </project>

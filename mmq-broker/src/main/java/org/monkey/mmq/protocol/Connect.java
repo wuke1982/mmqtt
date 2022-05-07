@@ -23,15 +23,13 @@ import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
-import org.monkey.mmq.auth.service.IAuthService;
+import org.monkey.mmq.auth.service.IMqttAuthService;
 import org.monkey.mmq.config.Loggers;
-import org.monkey.mmq.core.exception.KvStorageException;
 import org.monkey.mmq.core.exception.MmqException;
-import org.monkey.mmq.core.utils.LoggerUtils;
 import org.monkey.mmq.core.utils.StringUtils;
-import org.monkey.mmq.metadata.message.DupPubRelMessageMateData;
-import org.monkey.mmq.metadata.message.DupPublishMessageMateData;
-import org.monkey.mmq.metadata.message.SessionMateData;
+import org.monkey.mmq.core.actor.metadata.message.DupPubRelMessageMateData;
+import org.monkey.mmq.core.actor.metadata.message.DupPublishMessageMateData;
+import org.monkey.mmq.core.actor.metadata.message.SessionMateData;
 import org.monkey.mmq.service.DupPubRelMessageStoreService;
 import org.monkey.mmq.service.DupPublishMessageStoreService;
 import org.monkey.mmq.service.SessionStoreService;
@@ -53,9 +51,9 @@ public class Connect {
 
 	private DupPubRelMessageStoreService dupPubRelMessageStoreService;
 
-	private IAuthService authService;
+	private IMqttAuthService authService;
 
-	public Connect(SessionStoreService sessionStoreService, SubscribeStoreService subscribeStoreService, DupPublishMessageStoreService dupPublishMessageStoreService, DupPubRelMessageStoreService dupPubRelMessageStoreService, IAuthService authService) {
+	public Connect(SessionStoreService sessionStoreService, SubscribeStoreService subscribeStoreService, DupPublishMessageStoreService dupPublishMessageStoreService, DupPubRelMessageStoreService dupPubRelMessageStoreService, IMqttAuthService authService) {
 		this.sessionStoreService = sessionStoreService;
 		this.subscribeStoreService = subscribeStoreService;
 		this.dupPublishMessageStoreService = dupPublishMessageStoreService;
@@ -99,6 +97,7 @@ public class Connect {
 		// 用户名和密码验证, 这里要求客户端连接时必须提供用户名和密码, 不管是否设置用户名标志和密码标志为1, 此处没有参考标准协议实现
 		String username = msg.payload().userName();
 		String password = msg.payload().passwordInBytes() == null ? null : new String(msg.payload().passwordInBytes(), CharsetUtil.UTF_8);
+
 		if (!authService.checkValid(username, password)) {
 			MqttConnAckMessage connAckMessage = (MqttConnAckMessage) MqttMessageFactory.newMessage(
 				new MqttFixedHeader(MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
@@ -107,6 +106,7 @@ public class Connect {
 			channel.close();
 			return;
 		}
+
 		// 如果会话中已存储这个新连接的clientId, 就关闭之前该clientId的连接
 		if (sessionStoreService.containsKey(msg.payload().clientIdentifier())) {
 			SessionMateData sessionStore = sessionStoreService.get(msg.payload().clientIdentifier());
@@ -121,7 +121,8 @@ public class Connect {
 			previous.close();
 		}
 		// 处理遗嘱信息
-		SessionMateData sessionStore = new SessionMateData(msg.payload().clientIdentifier(), channel, msg.variableHeader().isCleanSession(), null);
+		SessionMateData sessionStore = new SessionMateData(msg.payload().clientIdentifier(),
+				channel, msg.variableHeader().isCleanSession(), null, username);
 		if (msg.variableHeader().isWillFlag()) {
 			MqttPublishMessage willMessage = (MqttPublishMessage) MqttMessageFactory.newMessage(
 				new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.valueOf(msg.variableHeader().willQos()), msg.variableHeader().isWillRetain(), 0),

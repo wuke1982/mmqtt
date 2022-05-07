@@ -15,10 +15,12 @@
  */
 package org.monkey.mmq.config.service;
 
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import org.monkey.mmq.config.actor.DriverActor;
 import org.monkey.mmq.config.config.Loggers;
 import org.monkey.mmq.config.driver.DriverFactory;
-import org.monkey.mmq.config.driver.MysqlDriver;
-import org.monkey.mmq.config.driver.ResourceDriver;
+import org.monkey.mmq.config.matedata.DriverMessage;
 import org.monkey.mmq.config.matedata.KeyBuilder;
 import org.monkey.mmq.config.matedata.UtilsAndCommons;
 import org.monkey.mmq.config.matedata.ResourcesMateData;
@@ -42,6 +44,9 @@ import java.util.Map;
 public class ResourcesService implements RecordListener<ResourcesMateData> {
 
     Map<String, ResourcesMateData> resourcesMateDataMap = new HashMap<>();
+
+    @Resource
+    ActorSystem actorSystem;
 
     @Resource(name = "configPersistentConsistencyServiceDelegate")
     private ConsistencyService consistencyService;
@@ -78,6 +83,11 @@ public class ResourcesService implements RecordListener<ResourcesMateData> {
         return resourcesMateDataMap;
     }
 
+    public boolean testConnect(ResourcesMateData resourcesMateData) {
+        if (resourcesMateData == null) return false;
+        return DriverFactory.getResourceDriverByEnum(resourcesMateData.getType()).testConnect(resourcesMateData);
+    }
+
     public ResourcesMateData getResourcesByResourceID(String resourceID) {
         return resourcesMateDataMap.get(UtilsAndCommons.RESOURCES_STORE +resourceID);
     }
@@ -96,10 +106,15 @@ public class ResourcesService implements RecordListener<ResourcesMateData> {
     public void onChange(String key, ResourcesMateData value) throws Exception {
         resourcesMateDataMap.put(key, value);
         DriverFactory.getResourceDriverByEnum(value.getType()).addDriver(value.getResourceID(), value.getResource());
+        // add driver actor
+        actorSystem.actorOf((Props.create(DriverActor.class, actorSystem)), value.getResourceID());
     }
 
     @Override
     public void onDelete(String key) throws Exception {
+        ResourcesMateData resourcesMateData = resourcesMateDataMap.get(key);
+        if (resourcesMateData == null) return;
+        DriverFactory.getResourceDriverByEnum(resourcesMateData.getType()).deleteDriver(resourcesMateData.getResourceID());
         resourcesMateDataMap.remove(key);
     }
 }

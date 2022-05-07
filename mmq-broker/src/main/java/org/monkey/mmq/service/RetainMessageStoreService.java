@@ -17,10 +17,10 @@ package org.monkey.mmq.service;
 
 import org.monkey.mmq.config.Loggers;
 import org.monkey.mmq.core.exception.MmqException;
-import org.monkey.mmq.metadata.KeyBuilder;
+import org.monkey.mmq.config.KeyBuilder;
 import org.monkey.mmq.core.consistency.matedata.RecordListener;
-import org.monkey.mmq.metadata.UtilsAndCommons;
-import org.monkey.mmq.metadata.message.RetainMessageMateData;
+import org.monkey.mmq.config.UtilsAndCommons;
+import org.monkey.mmq.core.actor.metadata.message.RetainMessageMateData;
 import org.monkey.mmq.core.consistency.persistent.ConsistencyService;
 import org.springframework.stereotype.Service;
 
@@ -44,11 +44,13 @@ public class RetainMessageStoreService implements RecordListener<RetainMessageMa
     private Map<String, RetainMessageMateData> retainMessageMateDataConcurrentHashMap = new ConcurrentHashMap<>();
 
     public void put(String topic, RetainMessageMateData retainMessageStore) throws MmqException {
-        consistencyService.put(UtilsAndCommons.RETAIN_STORE + topic, retainMessageStore);
+        String key = UtilsAndCommons.RETAIN_STORE + topic;
+        consistencyService.put(key, retainMessageStore);
     }
 
     public void remove(String topic) throws MmqException {
-        consistencyService.remove(UtilsAndCommons.RETAIN_STORE + topic);
+        String key = UtilsAndCommons.RETAIN_STORE + topic;
+        consistencyService.remove(key);
     }
 
     public List<RetainMessageMateData> search(String topicFilter) {

@@ -2,7 +2,7 @@
   <a-card :bordered="false">
     <!-- <a-button type="primary" @click="handleSave({})">添加</a-button> -->
     <div class="table-operator"></div>
-    <a-list :grid="{ gutter: 24, lg: 3, md: 2, sm: 1, xs: 1 }" :data-source="data">
+    <a-list :grid="{ gutter: 24, lg: 3, md: 2, sm: 1, xs: 1 }" :loading="loading" :data-source="data">
       <a-list-item slot="renderItem" slot-scope="item">
         <template v-if="!item || item.resourceID === undefined">
           <a-button @click="handleSave({})" class="new-btn" type="dashed">
@@ -34,48 +34,58 @@ export default {
   components: {
     ResourceModel
   },
-  data () {
+  data() {
     return {
       loading: true,
       data: []
     }
   },
-  filters: {
-  },
-  created () {
+  filters: {},
+  created() {
     this.loadData()
   },
   methods: {
-    loadData () {
-      return getAction('/v1/resources/resources', {})
-        .then(res => {
+    loadData() {
+      this.loading = true
+      setTimeout(() => {
+        return getAction('/v1/resources/resources', {}).then(res => {
           this.data = res.data
           this.data.unshift({})
+          this.loading = false
           //   res.data.forEach(resource => {
           //     this.data.push(resource)
           //   })
           console.log(this.data)
         })
+      }, 1000)
     },
-    getDescription (item) {
-      return '资源ID:' + item.resourceID + ' 资源类型:' + item.type + this.getResourceContentByType(item.resource, item.type)
+    getDescription(item) {
+      return (
+        '资源ID:' + item.resourceID + ' 资源类型:' + item.type + this.getResourceContentByType(item.resource, item.type)
+      )
     },
-    getResourceContentByType (resource, type) {
+    getResourceContentByType(resource, type) {
       switch (type) {
         case 'MYSQL':
           return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
         case 'POSTGRESQL':
           return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
+        case 'SQLSERVER':
+          return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
+        case 'TDENGINE':
+          return ' ip:' + resource.ip + ' port:' + resource.port + ' 数据库名称:' + resource.databaseName
         case 'KAFKA':
           return ' Kafka服务:' + resource.server
+        case 'MQTT_BROKER':
+          return ' MQTT BROKER服务:' + resource.server
         default:
           return ''
       }
     },
-    handleSave (record) {
+    handleSave(record) {
       this.$refs.ResourceModel.save(record)
     },
-    handleDelete (record) {
+    handleDelete(record) {
       console.log(record)
       deleteAction('/v1/resources', { resourceID: record.resourceID }).then(res => {
         if (res.code === 200) {

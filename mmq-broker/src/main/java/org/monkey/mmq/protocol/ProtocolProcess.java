@@ -16,12 +16,13 @@
 
 package org.monkey.mmq.protocol;
 
-import org.monkey.mmq.auth.service.IAuthService;
+import akka.actor.ActorSystem;
+import org.monkey.mmq.auth.service.IMqttAuthService;
+import org.monkey.mmq.core.cluster.ServerMemberManager;
 import org.monkey.mmq.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.util.concurrent.ExecutorService;
@@ -44,7 +45,7 @@ public class ProtocolProcess {
 
 	@Qualifier("mqttAuthService")
 	@Autowired
-	private IAuthService authService;
+	private IMqttAuthService authService;
 
 	@Autowired
 	private RetainMessageStoreService messageStoreService;
@@ -55,7 +56,14 @@ public class ProtocolProcess {
 	@Autowired
 	private DupPubRelMessageStoreService dupPubRelMessageStoreService;
 
+	@Autowired
+	private ActorSystem actorSystem;
 
+	public final ServerMemberManager memberManager;
+
+	public ProtocolProcess(ServerMemberManager memberManager) {
+		this.memberManager = memberManager;
+	}
 
 	private ExecutorService connectExecutor;
 	private ExecutorService pubExecutor;
@@ -164,7 +172,7 @@ public class ProtocolProcess {
 
 	public Publish publish() {
 		if (publish == null) {
-			publish = new Publish(sessionStoreService, subscribeStoreService, messageStoreService, dupPublishMessageStoreService);
+			publish = new Publish(sessionStoreService, subscribeStoreService, messageStoreService, dupPublishMessageStoreService, memberManager.getSelf(), actorSystem);
 		}
 		return publish;
 	}

@@ -16,6 +16,8 @@
 
 package org.monkey.mmq.auth.model;
 
+import org.monkey.mmq.core.consistency.matedata.Record;
+
 import java.io.Serializable;
 
 /**
@@ -23,7 +25,7 @@ import java.io.Serializable;
  *
  * @author solley
  */
-public class User implements Serializable {
+public class User implements Record, Serializable {
     
     private static final long serialVersionUID = 3371769277802700069L;
     

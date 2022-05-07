@@ -42,12 +42,12 @@
           {{ index + 1 }}
         </span>
         <span slot="enable" slot-scope="record">
-          <a-tag v-show="record.enable" color="red"> 启用 </a-tag>
-          <a-tag v-show="!record.enable" color="green"> 停止 </a-tag>
+          <a-tag v-show="record.enable" color="red"> 停止 </a-tag>
+          <a-tag v-show="!record.enable" color="green"> 启用 </a-tag>
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a @click="handleEnable(record)">{{ record.enable ? '启动' : '停止' }}</a>
+            <a @click="handleEnable(record)">{{ record.enable ? '停止' : '启用' }}</a>
             <a-divider type="vertical" />
             <a @click="handleSave(record)">编辑</a>
             <a-divider type="vertical" />
@@ -98,33 +98,33 @@ export default {
     STable,
     Ellipsis
   },
-  data () {
+  data() {
     this.columns = columns
     return {
       // 高级搜索 展开/关闭
       advanced: false,
       dataSource: [],
+      loading: true,
       // 查询参数
       queryParam: {},
       // 加载数据方法 必须为 Promise 对象
       loadData: parameter => {
+        this.loading = true
         const requestParameters = Object.assign({}, parameter, this.queryParam)
         console.log('loadData request parameters:', requestParameters)
-        return getAction('/v1/ruleEngine/ruleEngines', requestParameters)
-          .then(res => {
-            this.dataSource = res.data.data
-            return res.data
-          })
+        return getAction('/v1/ruleEngine/ruleEngines', requestParameters).then(res => {
+          this.dataSource = res.data.data
+          this.loading = false
+          return res.data
+        })
       },
       selectedRowKeys: [],
       selectedRows: []
     }
   },
-  created () {
-
-  },
+  created() {},
   computed: {
-    rowSelection () {
+    rowSelection() {
       return {
         selectedRowKeys: this.selectedRowKeys,
         onChange: this.onSelectChange
@@ -132,28 +132,28 @@ export default {
     }
   },
   methods: {
-    onSelectChange (selectedRowKeys, selectedRows) {
+    onSelectChange(selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    toggleAdvanced () {
+    toggleAdvanced() {
       this.advanced = !this.advanced
     },
-    resetSearchForm () {
+    resetSearchForm() {
       this.queryParam = {}
     },
-    handleEnable (record) {
+    handleEnable(record) {
       record.enable = !record.enable
       postAction('/v1/ruleEngine', record).then(res => {
         if (res.code === 200) {
-          this.$message.info('踢出成功！')
+          this.$message.info('启动成功！')
           this.$refs.table.refresh(true)
         } else {
           this.$message.info(res.message)
         }
       })
     },
-    handleDelete (record) {
+    handleDelete(record) {
       console.log(record)
       deleteAction('/v1/ruleEngine', { ruleId: record.ruleId }).then(res => {
         if (res.code === 200) {
@@ -164,7 +164,7 @@ export default {
         }
       })
     },
-    handleSave (record) {
+    handleSave(record) {
       this.$router.push({ name: 'RuleEngineModel', params: { id: record.ruleId } })
     }
   }

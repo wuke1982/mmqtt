@@ -17,6 +17,12 @@ package org.monkey.mmq.config.driver;
 
 import org.monkey.mmq.config.matedata.ResourceEnum;
 import org.monkey.mmq.core.utils.ApplicationUtils;
+import org.monkey.mmq.core.utils.StringUtils;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author solley
@@ -24,5 +30,31 @@ import org.monkey.mmq.core.utils.ApplicationUtils;
 public class DriverFactory {
     public static ResourceDriver getResourceDriverByEnum(ResourceEnum resourceEnum) {
         return (ResourceDriver) ApplicationUtils.getBean(resourceEnum.getName());
+    }
+
+    public static void setProperty(Map property, String topic, String username) {
+        property.put("uuid", UUID.randomUUID().toString());
+
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        property.put("date", sdf.format(date));
+        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        property.put("datetime", sdf.format(date));
+        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        property.put("utc", sdf.format(date));
+        property.put("timestamp", date.getTime());
+        if (StringUtils.isNotEmpty(username)) {
+            property.put("username", username);
+        }
+
+        if (StringUtils.isEmpty(topic)) return;
+        property.put("topic", topic);
+
+        String[] topics = topic.split("/");
+        if (topics == null) return;
+
+        for (int i = 0; i < topics.length; i++) {
+            property.put("topic" + i, topics[i]);
+        }
     }
 }
